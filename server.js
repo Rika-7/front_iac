@@ -2,7 +2,8 @@ import { createServer } from "http";
 import { parse } from "url";
 import next from "next";
 import { fileURLToPath } from "url";
-import { dirname } from "path";
+import { dirname, join } from "path";
+import { existsSync } from "fs";
 
 // Get the equivalent of __dirname in ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -10,11 +11,17 @@ const __dirname = dirname(__filename);
 
 // Always use production mode when deployed
 const dev = false;
+
+// Check if we're running in a standalone environment
+const standalonePath = join(__dirname, ".next/standalone");
+const isStandalone = existsSync(standalonePath);
+
+// Configure the Next.js app with the correct path
 const app = next({
   dev,
-  dir: __dirname,
+  dir: isStandalone ? standalonePath : __dirname,
   conf: {
-    distDir: ".next",
+    distDir: isStandalone ? "./.next" : ".next",
   },
 });
 
@@ -24,6 +31,11 @@ const port = process.env.PORT || 3000;
 // Log startup information to help with debugging
 console.log("Starting Next.js server in standalone mode");
 console.log("Current working directory:", __dirname);
+console.log("Is standalone mode:", isStandalone);
+console.log(
+  "Looking for Next.js build in:",
+  isStandalone ? join(standalonePath, ".next") : join(__dirname, ".next")
+);
 console.log("Environment:", process.env.NODE_ENV);
 
 try {
