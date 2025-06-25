@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const researcherId = params.id;
+    // In Next.js 15, params is a Promise, so we need to await it
+    const { id: researcherId } = await params;
 
     // Get the external API URL from environment variables
     const apiUrl =
