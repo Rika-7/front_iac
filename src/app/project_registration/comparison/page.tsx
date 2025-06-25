@@ -44,6 +44,13 @@ interface DatabaseResearcher {
   position_current: string;
 }
 
+// Type for project data from localStorage
+interface ProjectData {
+  category: string;
+  title: string;
+  description: string;
+}
+
 export default function ResearcherComparison() {
   const router = useRouter();
   const [patternAResults, setPatternAResults] = useState<Researcher[]>([]);
@@ -56,15 +63,15 @@ export default function ResearcherComparison() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // State for project details - KEEP DEFAULTS as fallback
+  const [projectDetails, setProjectDetails] = useState<ProjectData>({
+    category: "研究のアドバイス",
+    title: "AI技術の教育応用",
+    description: "教育分野でのAI技術活用について専門家の意見を求めたい",
+  });
+
   // Add a ref to prevent multiple API calls
   const hasCalledApi = useRef(false);
-
-  // Project details with default values
-  const category = "研究のアドバイス";
-  const title = "AI技術の教育応用";
-  const description = "教育分野でのAI技術活用について専門家の意見を求めたい";
-
-  const projectDetails = { category, title, description };
 
   const handleSubmit = async () => {
     router.push("/message");
@@ -73,6 +80,46 @@ export default function ResearcherComparison() {
   const goToStandardView = () => {
     router.push("/project_registration/recommend");
   };
+
+  // Function to load project data from localStorage - MINIMAL CHANGE: Use stored data when available, fallback to defaults
+  const loadProjectData = useCallback(() => {
+    try {
+      // Try to get data from localStorage
+      const savedData = localStorage.getItem("recommendResults");
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+
+        // Check if the data contains the project details
+        if (parsedData.category && parsedData.title && parsedData.description) {
+          setProjectDetails({
+            category: parsedData.category,
+            title: parsedData.title,
+            description: parsedData.description,
+          });
+          console.log("✅ Project data loaded from localStorage:", parsedData);
+          return true;
+        }
+      }
+
+      // MINIMAL CHANGE: Keep using defaults when no data found
+      console.log("⚠️ No project data found in localStorage, using defaults");
+      setProjectDetails({
+        category: "研究のアドバイス",
+        title: "AI技術の教育応用",
+        description: "教育分野でのAI技術活用について専門家の意見を求めたい",
+      });
+      return false;
+    } catch (error) {
+      console.error("❌ Error loading project data from localStorage:", error);
+      // Also set defaults on error
+      setProjectDetails({
+        category: "研究のアドバイス",
+        title: "AI技術の教育応用",
+        description: "教育分野でのAI技術活用について専門家の意見を求めたい",
+      });
+      return false;
+    }
+  }, []);
 
   // Function to fetch researcher names from the database
   const fetchResearcherNames = async (
@@ -205,6 +252,7 @@ export default function ResearcherComparison() {
 
     try {
       console.log("=== STARTING FETCHDATA ===");
+      console.log("Using project details:", projectDetails);
 
       // Step 1: Get pattern comparison results
       console.log("=== CALLING /api/compare_patterns ===");
@@ -212,9 +260,9 @@ export default function ResearcherComparison() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          category,
-          title,
-          description,
+          category: projectDetails.category,
+          title: projectDetails.title,
+          description: projectDetails.description,
           university: "東京科学大学",
           top_k: 10,
         }),
@@ -284,11 +332,24 @@ export default function ResearcherComparison() {
     } finally {
       setIsLoading(false);
     }
-  }, [category, title, description]);
+  }, [projectDetails]);
 
+  // Load project data when component mounts
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    loadProjectData();
+  }, [loadProjectData]);
+
+  // Fetch data when project details change
+  useEffect(() => {
+    // Only fetch if we have valid project details
+    if (
+      projectDetails.category &&
+      projectDetails.title &&
+      projectDetails.description
+    ) {
+      fetchData();
+    }
+  }, [fetchData, projectDetails]);
 
   // Add a retry function for failed requests
   const retryFetch = () => {

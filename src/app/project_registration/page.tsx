@@ -25,12 +25,14 @@ export default function Component() {
       alert("必須項目（タイトルと依頼詳細）を入力してください");
       return;
     }
-  
-    const confirmed = confirm("AIが最適な研究者を検索します。実行してよろしいですか？");
+
+    const confirmed = confirm(
+      "AIが最適な研究者を検索します。実行してよろしいですか？"
+    );
     if (!confirmed) return;
-  
+
     setIsLoading(true);
-  
+
     try {
       const response = await fetch("/api/project_registration", {
         method: "POST",
@@ -41,9 +43,18 @@ export default function Component() {
           description: description,
         }),
       });
-  
+
       const data = await response.json();
-      localStorage.setItem("recommendResults", JSON.stringify(data));
+
+      // MINIMAL CHANGE: Store the input data along with results
+      const dataWithInput = {
+        ...data,
+        category: selectedOption,
+        title: title,
+        description: description,
+      };
+
+      localStorage.setItem("recommendResults", JSON.stringify(dataWithInput));
       router.push("/project_registration/recommend");
     } catch (error) {
       console.error("エラー:", error);
@@ -329,16 +340,19 @@ export default function Component() {
           </div>
         </div>
       </div>
-      
+
       {isLoading && (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-900/50 z-50">
           <div className="bg-white p-6 rounded shadow-lg text-center max-w-sm w-full mx-4">
-            <p className="text-lg font-medium mb-4">AIが最適な研究者を検索しています</p>
-            <div className="animate-pulse text-gray-600">少々お待ちください...</div>
+            <p className="text-lg font-medium mb-4">
+              AIが最適な研究者を検索しています
+            </p>
+            <div className="animate-pulse text-gray-600">
+              少々お待ちください...
+            </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }
