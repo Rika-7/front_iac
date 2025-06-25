@@ -9,10 +9,11 @@ export async function POST(request: Request) {
       process.env.NEXT_PUBLIC_API_URL ||
       "https://app-advanced3-5-g2qhbrhbb0brg9e7.canadacentral-01.azurewebsites.net";
 
+    // FIX: Use correct endpoint name with hyphen (compare-patterns, not compare_patterns)
     console.log("Calling external API:", `${apiUrl}/compare-patterns`);
     console.log("Request body:", body);
 
-    // Call the external API
+    // Call the external API with the correct endpoint name
     const response = await fetch(`${apiUrl}/compare-patterns`, {
       method: "POST",
       headers: {
