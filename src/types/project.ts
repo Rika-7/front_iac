@@ -19,6 +19,19 @@ export interface ProjectsResponse {
 export interface Researcher {
   researcher_id: string;
   name: string;
+  name_alphabet?: string; // ADDED: English name field
+  university: string;
+  affiliation: string;
+  position: string;
+  research_field: string;
+  keywords: string;
+  explanation: string;
+  score: number;
+  pattern?: string;
+}
+export interface Researcher {
+  researcher_id: string;
+  name: string;
   university: string;
   affiliation: string;
   position: string;
